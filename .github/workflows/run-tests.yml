@@ -1,0 +1,42 @@
+name: "Run tests"
+on: push
+
+env:
+  GAME_SUBDIRECTORY: game
+  TEST_SUBDIRECTORY: tests
+  STANDARD_TESTS_NAMESPACE: template.test.standard
+  TEST_TARGET_FRAMEWORK: net472
+  TEST_FRAMEWORK_RUNNER: xunit.runner.console
+  TEST_FRAMEWORK_RUNNER_VERSION: 2.4.1
+  TEST_FRAMEWORK_RUNNER_EXECUTABLE: net472/xunit.console.exe
+  TEST_DLL: Tests.dll
+  PACKAGES_PATH: ~/packages
+
+jobs:
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:mono-3.2.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          lfs: true
+          submodules: true
+      - name: Setup test runner
+        run: |
+          nuget install $TEST_FRAMEWORK_RUNNER -Version $TEST_FRAMEWORK_RUNNER_VERSION -OutputDirectory $PACKAGES_PATH
+      - name: Build solution
+        run: |
+          ln -s ../../game/.mono ./.submodules/GodotXUnit/.mono
+          nuget restore $GAME_SUBDIRECTORY
+          godot --path ./$GAME_SUBDIRECTORY --build-solutions --quit
+        timeout-minutes: 1
+        continue-on-error: true
+      - name: Standard Tests
+        run: |
+          mono $PACKAGES_PATH/$TEST_FRAMEWORK_RUNNER.$TEST_FRAMEWORK_RUNNER_VERSION/tools/$TEST_FRAMEWORK_RUNNER_EXECUTABLE $TEST_SUBDIRECTORY/bin/Debug/$TEST_TARGET_FRAMEWORK/$TEST_DLL -namespace $STANDARD_TESTS_NAMESPACE -verbose
+      - name: Godot Tests
+        run: |
+          godot --path ./game res://addons/GodotXUnit/runner/GodotTestRunnerScene.tscn

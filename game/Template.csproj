@@ -1,0 +1,11 @@
+<Project Sdk="Godot.NET.Sdk/3.2.3">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="addons\GodotXUnit\GodotXUnitApi\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="addons\GodotXUnit\GodotXUnitApi\GodotXUnitApi.csproj" />
+  </ItemGroup>
+</Project>
